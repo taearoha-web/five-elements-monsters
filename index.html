@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#07131d">
+<title>Five Elements Monsters V0.2</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--gold:#f6c85f;--ink:#07131d;--panel:#0c2130;--line:#ffffff25}
+body{margin:0;font-family:system-ui,-apple-system,"Noto Sans Thai",sans-serif;background:#061019;color:#fff}
+button{font:inherit;cursor:pointer}
+#game{max-width:980px;margin:auto;min-height:100vh;background:radial-gradient(circle at 50% 0,#183d4c,#07131d 45%,#040b10)}
+.screen{display:none;padding:14px;min-height:100vh}.screen.active{display:block}
+.top{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:10px}
+.logo{font-weight:1000;letter-spacing:.8px}.logo b{color:var(--gold)}
+.pill{border:1px solid var(--line);background:#07131ddd;border-radius:999px;padding:8px 11px;font-size:12px}
+.hero{text-align:center;padding:20px 8px 10px}.hero h1{font-size:clamp(28px,7vw,55px);line-height:.95;margin:8px 0}.hero p{opacity:.78}
+.starters{display:grid;grid-template-columns:repeat(5,1fr);gap:9px}
+.card{position:relative;overflow:hidden;border:1px solid var(--line);border-radius:20px;background:linear-gradient(160deg,#ffffff14,#ffffff05);padding:12px;text-align:center;min-width:0}
+.card:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 25%,var(--c),transparent 55%);opacity:.28;pointer-events:none}
+.monster{position:relative;font-size:clamp(44px,9vw,84px);filter:drop-shadow(0 8px 5px #0008);transform:scale(1.05)}
+.card h3{position:relative;margin:5px 0 0}.element{position:relative;font-size:12px;opacity:.8}
+.pick{position:relative;width:100%;border:1px solid #ffffff38;background:#ffffff13;color:white;border-radius:12px;padding:10px;margin-top:10px;font-weight:800}
+.pick:active,.action:active,.dpad button:active{transform:scale(.96)}
+.worldWrap{display:grid;grid-template-columns:minmax(0,1fr) 240px;gap:10px}
+.world{height:560px;max-height:70vh;min-height:430px;position:relative;overflow:hidden;border:1px solid var(--line);border-radius:22px;background:
+radial-gradient(circle at 16% 18%,#d7f38b 0 2%,transparent 2.5%),
+radial-gradient(circle at 78% 24%,#fff5a2 0 1.5%,transparent 2%),
+linear-gradient(90deg,transparent 44%,#c9ad72 44% 58%,transparent 58%),
+linear-gradient(#3b9a55,#55a85c)}
+.water{position:absolute;right:-45px;top:0;width:30%;height:100%;background:repeating-linear-gradient(165deg,#4fb7c8 0 10px,#45a8bd 10px 20px);border-left:8px solid #d7c47c}
+.house{position:absolute;left:8%;top:7%;width:120px;height:90px;background:#8c5a3b;border:6px solid #5e3829;border-radius:10px}.house:before{content:"";position:absolute;left:-15px;right:-15px;top:-28px;height:45px;background:#294a53;clip-path:polygon(50% 0,100% 70%,90% 100%,10% 100%,0 70%)}
+.tree{position:absolute;font-size:60px;filter:drop-shadow(0 7px 3px #163b2c88)}
+.t1{left:4%;bottom:8%}.t2{left:28%;top:22%}.t3{right:25%;bottom:5%}.t4{right:27%;top:5%}
+.player,.buddy,.wild{position:absolute;transition:left .16s,top .16s;filter:drop-shadow(0 5px 3px #0007);z-index:4}.player{font-size:40px}.buddy{font-size:45px;z-index:3}.wild{font-size:40px;left:18%;top:67%}
+.quest{position:absolute;left:12px;top:12px;background:#061019dd;border:1px solid var(--line);padding:9px 11px;border-radius:12px;font-size:12px;z-index:10}
+.side{display:flex;flex-direction:column;gap:10px}.panel{background:#0a1d29e8;border:1px solid var(--line);border-radius:18px;padding:12px}
+.panel h3{margin:0 0 8px}.stat{font-size:12px;opacity:.8;margin:5px 0}.bar{height:8px;border-radius:9px;background:#2b2932;overflow:hidden}.bar i{display:block;height:100%;background:#65dc79}
+.dpad{display:grid;grid-template-columns:repeat(3,58px);justify-content:center;gap:5px;margin-top:10px}.dpad button,.action{min-height:50px;border:1px solid #ffffff35;background:#102d3d;color:#fff;border-radius:15px;font-weight:900}.dpad .up{grid-column:2}.dpad .left{grid-column:1}.dpad .down{grid-column:2}.dpad .right{grid-column:3}.action.gold{background:linear-gradient(#f5d477,#c9912d);color:#1c1407}
+.battlefield{position:relative;min-height:430px;border-radius:22px;overflow:hidden;border:1px solid var(--line);background:linear-gradient(#3c7898 0 38%,#6da65f 38% 52%,#a98657 52%)}
+.battlefield:before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 75% 50%,#ffffff25 0 12%,transparent 13%),radial-gradient(ellipse at 25% 77%,#ffffff20 0 16%,transparent 17%)}
+.enemyRow,.allyRow{position:absolute;display:flex;gap:4%;width:70%;justify-content:center}.enemyRow{right:2%;top:12%}.allyRow{left:2%;bottom:8%}
+.fighter{text-align:center;width:30%;z-index:2}.fighter .sprite{font-size:clamp(44px,10vw,82px);filter:drop-shadow(0 8px 4px #0008)}.fighter .name{font-size:11px;font-weight:800;text-shadow:0 2px 2px #000}.hp{height:7px;background:#39202a;border:1px solid #0008;border-radius:8px;overflow:hidden}.hp i{height:100%;display:block;background:#61dc70}
+.command{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.command button{min-height:52px;border:1px solid #ffffff2c;border-radius:14px;background:#102838;color:#fff;font-weight:900}.command button:first-child{background:linear-gradient(#f4d26f,#c68b26);color:#171006}
+.log{font-size:12px;line-height:1.45;height:70px;overflow:auto;background:#0004;padding:8px;border-radius:10px;margin-top:8px}
+.flash{animation:hit .22s 2}@keyframes hit{50%{transform:translateX(8px);filter:brightness(2)}} 
+@media(max-width:720px){.starters{grid-template-columns:repeat(2,1fr)}.card:last-child{grid-column:1/-1}.worldWrap{grid-template-columns:1fr}.world{height:470px}.side{display:grid;grid-template-columns:1fr 1fr}.screen{padding:9px}}
+</style>
+</head>
+<body><main id="game">
+<section id="select" class="screen active">
+<div class="top"><div class="logo">FIVE ELEMENTS <b>MONSTERS</b></div><span class="pill">V0.2 • Mobile RPG</span></div>
+<div class="hero"><div>✦ ตำนานแห่งธาตุทั้งห้า ✦</div><h1>เลือกคู่หู<br><span style="color:var(--gold)">ตัวแรกของคุณ</span></h1><p>คู่หูที่เลือกจะเดินทางและต่อสู้เคียงข้างคุณ</p></div>
+<div id="starterGrid" class="starters"></div>
+</section>
+
+<section id="worldScreen" class="screen">
+<div class="top"><div class="logo">🌿 หมู่บ้านสายลม</div><div class="pill">⭐ Lv.<span id="level">1</span> • EXP <span id="exp">0</span>/100</div></div>
+<div class="worldWrap">
+<div>
+<div id="world" class="world">
+<div class="quest">◆ เควสหลัก<br><b>ออกจากหมู่บ้านไปยังป่าแห่งการเริ่มต้น</b></div>
+<div class="house"></div><div class="water"></div>
+<div class="tree t1">🌳</div><div class="tree t2">🌲</div><div class="tree t3">🌳</div><div class="tree t4">🌲</div>
+<div class="wild">👾</div><div id="buddy" class="buddy"></div><div id="player" class="player">🧑🏻‍🦱</div>
+</div>
+<div class="dpad"><button class="up" data-dx="0" data-dy="-22">▲</button><button class="left" data-dx="-22" data-dy="0">◀</button><button class="down" data-dx="0" data-dy="22">▼</button><button class="right" data-dx="22" data-dy="0">▶</button></div>
+</div>
+<aside class="side">
+<div class="panel"><h3>🐾 คู่หูของคุณ</h3><div id="buddyInfo"></div><div class="stat">HP</div><div class="bar"><i></i></div></div>
+<div class="panel"><h3>🗺️ การผจญภัย</h3><p class="stat">เดินสำรวจมีโอกาสพบมอนสเตอร์ป่า หรือกดปุ่มด้านล่างเพื่อทดสอบ Battle</p><button id="battleBtn" class="action gold" style="width:100%">⚔️ เข้าสู่การต่อสู้</button></div>
+</aside></div>
+</section>
+
+<section id="battleScreen" class="screen">
+<div class="top"><div class="logo">⚔️ BATTLE <b>3 VS 3</b></div><span class="pill">ป่าแห่งการเริ่มต้น</span></div>
+<div id="battlefield" class="battlefield"><div id="enemyRow" class="enemyRow"></div><div id="allyRow" class="allyRow"></div></div>
+<div class="panel"><div><b id="turnLabel">เลือกคำสั่ง</b> <span class="stat">• คู่หูหลักเป็นผู้นำการโจมตี</span></div><div id="commands" class="command"></div><div id="battleLog" class="log"></div></div>
+<button id="runBtn" class="action" style="width:100%;margin-top:8px">↩ กลับไปสำรวจ</button>
+</section>
+</main>
+<script>
+(()=>{
+const root=document.getElementById('game');
+const mons=[
+ {th:'กระทิงดิน',en:'Terrabull',el:'ดิน',icon:'🐂',c:'#a87942',skills:['เขาศิลา','แผ่นดินสะเทือน']},
+ {th:'ฉลามน้ำ',en:'Aquashark',el:'น้ำ',icon:'🦈',c:'#2aa8df',skills:['เขี้ยวคลื่น','คลื่นมหาสมุทร']},
+ {th:'ลิงลม',en:'Zephymon',el:'ลม',icon:'🐒',c:'#4dcc83',skills:['หมัดวายุ','พายุหมุน']},
+ {th:'เม่นไฟ',en:'Emberhog',el:'ไฟ',icon:'🦔',c:'#ef5b3e',skills:['หนามเพลิง','เปลวไฟระเบิด']},
+ {th:'อสูรทอง',en:'Aurumon',el:'ทอง',icon:'🐺',c:'#e4b53f',skills:['กรงเล็บทอง','ประกายพิฆาต']}
+];
+let buddy=null,level=1,exp=0,px=48,py=54,bx=42,by=62,my=[],enemy=[];
+const $=id=>document.getElementById(id);
+function show(id){root.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));$(id).classList.add('active')}
+$('starterGrid').innerHTML=mons.map((m,i)=>`<article class="card" style="--c:${m.c}"><div class="monster">${m.icon}</div><h3>${m.th}</h3><div class="element">ธาตุ${m.el} • ${m.en}</div><button class="pick" data-pick="${i}">เลือกคู่หู</button></article>`).join('');
+root.querySelectorAll('[data-pick]').forEach(b=>b.addEventListener('click',()=>choose(+b.dataset.pick)));
+function choose(i){buddy=mons[i];$('buddy').textContent=buddy.icon;$('buddyInfo').innerHTML=`<div style="font-size:44px">${buddy.icon}</div><b>${buddy.th}</b><div class="stat">${buddy.en} • ธาตุ${buddy.el}</div>`;place();show('worldScreen')}
+function place(){$('player').style.left=px+'%';$('player').style.top=py+'%';$('buddy').style.left=bx+'%';$('buddy').style.top=by+'%'}
+root.querySelectorAll('.dpad button').forEach(b=>b.addEventListener('click',()=>move(+b.dataset.dx,+b.dataset.dy)));
+function move(dx,dy){bx=px;by=py;px=Math.max(3,Math.min(78,px+dx/5));py=Math.max(15,Math.min(82,py+dy/5));place();if(Math.random()<.09)startBattle()}
+$('battleBtn').addEventListener('click',startBattle);
+function startBattle(){if(!buddy)return;my=[buddy,mons[(mons.indexOf(buddy)+1)%5],mons[(mons.indexOf(buddy)+2)%5]].map(x=>({...x,hp:100}));enemy=[...mons].sort(()=>Math.random()-.5).slice(0,3).map(x=>({...x,hp:100}));renderBattle();$('battleLog').innerHTML='👾 มอนสเตอร์ป่า 3 ตัวปรากฏตัว!<br>';show('battleScreen')}
+function fighter(m){return `<div class="fighter"><div class="sprite">${m.icon}</div><div class="name">${m.th} • Lv.${level}</div><div class="hp"><i style="width:${m.hp}%"></i></div></div>`}
+function renderBattle(){$('allyRow').innerHTML=my.map(fighter).join('');$('enemyRow').innerHTML=enemy.map(fighter).join('');$('commands').innerHTML=`<button data-act="0">⚔️ ${buddy.skills[0]}</button><button data-act="1">✨ ${buddy.skills[1]}</button><button data-act="team">💥 โจมตีประสาน</button><button data-act="heal">💚 ตั้งรับ + ฟื้นฟู</button>`;$('commands').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>act(b.dataset.act)))}
+function log(t){$('battleLog').innerHTML+=t+'<br>';$('battleLog').scrollTop=9999}
+function act(a){if(enemy.every(x=>x.hp<=0))return;if(a==='heal'){my.forEach(x=>x.hp=Math.min(100,x.hp+16));log('💚 ทีมตั้งรับและฟื้น HP')}else if(a==='team'){enemy.filter(x=>x.hp>0).forEach(x=>x.hp=Math.max(0,x.hp-14-Math.floor(Math.random()*8)));log('💥 ทั้งสามตัวโจมตีประสาน!')}else{let live=enemy.filter(x=>x.hp>0),t=live[Math.floor(Math.random()*live.length)],d=24+Math.floor(Math.random()*15);t.hp=Math.max(0,t.hp-d);log(`${buddy.icon} ${buddy.th} ใช้ ${buddy.skills[+a]} — ${d} DMG`)}enemyTurn();renderBattle();check()}
+function enemyTurn(){let alive=my.filter(x=>x.hp>0);enemy.filter(x=>x.hp>0).forEach(e=>{if(!alive.length)return;let t=alive[Math.floor(Math.random()*alive.length)];t.hp=Math.max(0,t.hp-(5+Math.floor(Math.random()*8)))});log('⚡ ฝ่ายศัตรูโต้กลับ')}
+function check(){if(enemy.every(x=>x.hp<=0)){exp+=50;log('🏆 ชนะการต่อสู้! +50 EXP');if(exp>=100){exp-=100;level++;log('⭐ LEVEL UP! Lv.'+level)}$('level').textContent=level;$('exp').textContent=exp}}
+$('runBtn').addEventListener('click',()=>show('worldScreen'));
+})();
+</script>
+</body></html>
