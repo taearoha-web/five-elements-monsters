@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Five Elements Monsters V0.1</title>
+<style>
+*{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,sans-serif;background:#0d1424;color:#fff}
+#app{max-width:520px;margin:auto;min-height:100vh;background:linear-gradient(#16233d,#0d1424);padding:14px}
+h1,h2,p{margin:8px 0}.panel{background:#ffffff12;border:1px solid #ffffff22;border-radius:18px;padding:14px;margin:10px 0}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.starter{padding:14px;border:1px solid #ffffff2c;border-radius:16px;background:#ffffff0b;text-align:center}
+.starter:last-child{grid-column:1/-1}.emoji{font-size:52px}.tag{font-size:12px;opacity:.8}
+button{border:0;border-radius:14px;padding:13px 15px;font-weight:800;font-size:15px;background:#ffd45a;color:#1b2130}
+button.secondary{background:#dbe7ff}.hidden{display:none}.row{display:flex;gap:8px;align-items:center;justify-content:space-between}
+.map{height:300px;position:relative;overflow:hidden;background:linear-gradient(#8fd16a 0 70%,#d8bc7a 70%);border-radius:18px;border:4px solid #ffffff22}
+.path{position:absolute;width:110px;height:350px;background:#d9c38b;left:205px;top:-20px;transform:rotate(8deg)}
+.player,.follower,.wild{position:absolute;font-size:38px;filter:drop-shadow(0 4px 3px #0005)}
+.player{left:230px;top:210px}.follower{left:190px;top:245px}.wild{left:70px;top:80px}
+.controls{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;max-width:230px;margin:12px auto}.controls button{font-size:22px;padding:11px}.controls .up{grid-column:2}.controls .left{grid-column:1}.controls .down{grid-column:2}.controls .right{grid-column:3}
+.team{display:flex;gap:7px}.mon{flex:1;background:#ffffff12;padding:8px;border-radius:12px;text-align:center}.hp{height:8px;background:#381f2b;border-radius:9px;overflow:hidden}.hp i{display:block;height:100%;background:#6ee77b;width:100%}
+.log{height:92px;overflow:auto;font-size:13px;background:#0003;border-radius:10px;padding:8px}.skills{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.small{font-size:12px;opacity:.8}.title{text-align:center;font-size:27px}.gold{color:#ffd45a}
+</style></head>
+<body><div id="app">
+<section id="select">
+<h1 class="title">⚔️ Five Elements Monsters</h1>
+<p style="text-align:center">เลือกมอนสเตอร์คู่หูตัวแรกของคุณ 1 ตัว</p>
+<div class="grid" id="starters"></div>
+</section>
+
+<section id="world" class="hidden">
+<div class="row"><div><b id="heroName">Trainer</b><div class="small">คู่หู: <span id="buddyName"></span></div></div><button onclick="openBattle()">⚔️ ต่อสู้</button></div>
+<div class="panel"><b>🌿 ทุ่งเริ่มต้น</b><p class="small">เดินสำรวจได้ และมอนสเตอร์ที่เลือกจะเดินตามคุณ</p>
+<div class="map"><div class="path"></div><div class="wild">👾</div><div class="player" id="player">🧑</div><div class="follower" id="follower"></div></div>
+<div class="controls"><button class="up" onclick="move(0,-18)">▲</button><button class="left" onclick="move(-18,0)">◀</button><button class="down" onclick="move(0,18)">▼</button><button class="right" onclick="move(18,0)">▶</button></div>
+</div>
+<div class="panel"><b>🎯 เป้าหมาย V0.1</b><p class="small">สำรวจ → เจอมอนสเตอร์ → ต่อสู้ 3v3 → รับ EXP → เพิ่มเลเวล</p></div>
+</section>
+
+<section id="battle" class="hidden">
+<div class="row"><h2>⚔️ Battle 3 vs 3</h2><button class="secondary" onclick="backWorld()">หนี</button></div>
+<div class="panel"><b>ศัตรู</b><div class="team" id="enemyTeam"></div></div>
+<div class="panel"><b>ทีมของเรา</b><div class="team" id="myTeam"></div></div>
+<div class="panel"><div id="turnText">เลือกท่าโจมตี</div><div class="skills" id="skills"></div></div>
+<div class="log" id="log"></div>
+</section>
+</div>
+<script>
+const mons=[
+{name:"Terra Bull",th:"กระทิงดิน",el:"ดิน",icon:"🐂",skill:["เขากระแทก","กำแพงหิน"]},
+{name:"Aqua Shark",th:"ฉลามน้ำ",el:"น้ำ",icon:"🦈",skill:["เขี้ยวคลื่น","วารีฟื้นฟู"]},
+{name:"Gale Monkey",th:"ลิงลม",el:"ลม",icon:"🐒",skill:["หมัดวายุ","ลมกรด"]},
+{name:"Flare Hedge",th:"เม่นไฟ",el:"ไฟ",icon:"🦔",skill:["หนามเพลิง","ไฟพุ่ง"]},
+{name:"Aurum Beast",th:"อสูรทอง",el:"ทอง",icon:"🐺",skill:["กรงเล็บทอง","เกราะโลหะ"]}
+];
+let buddy=null, px=230,py=210, level=1, exp=0, my=[], enemies=[];
+const $=id=>document.getElementById(id);
+mons.forEach((m,i)=>$("starters").innerHTML+=`<div class="starter"><div class="emoji">${m.icon}</div><b>${m.th}</b><div class="tag">ธาตุ${m.el}</div><p class="small">${m.skill.join(" • ")}</p><button onclick="choose(${i})">เลือกตัวนี้</button></div>`);
+function choose(i){buddy=mons[i];$("select").classList.add("hidden");$("world").classList.remove("hidden");$("follower").textContent=buddy.icon;$("buddyName").textContent=buddy.th+" • Lv."+level;localStorage.setItem("fiveBuddy",i)}
+function move(dx,dy){let f=$("follower");f.style.left=(px-40)+"px";f.style.top=(py+35)+"px";px=Math.max(5,Math.min(465,px+dx));py=Math.max(5,Math.min(245,py+dy));$("player").style.left=px+"px";$("player").style.top=py+"px";if(Math.random()<.12)openBattle()}
+function openBattle(){if(!buddy)return; $("world").classList.add("hidden");$("battle").classList.remove("hidden");my=[buddy,mons[(mons.indexOf(buddy)+1)%5],mons[(mons.indexOf(buddy)+2)%5]].map(m=>({...m,hp:100}));enemies=[...mons].sort(()=>Math.random()-.5).slice(0,3).map(m=>({...m,hp:100}));render();log("มอนสเตอร์ป่า 3 ตัวปรากฏตัว!")}
+function render(){
+$("myTeam").innerHTML=my.map(m=>card(m)).join("");$("enemyTeam").innerHTML=enemies.map(m=>card(m)).join("");
+$("skills").innerHTML=buddy.skill.map((s,i)=>`<button onclick="attack(${i})">${s}</button>`).join("")+`<button class="secondary" onclick="attack(2)">โจมตีทีม</button><button class="secondary" onclick="heal()">พักฟื้น</button>`;
+}
+function card(m){return `<div class="mon"><div style="font-size:30px">${m.icon}</div><b>${m.th}</b><div class="small">${m.el}</div><div class="hp"><i style="width:${m.hp}%"></i></div><span class="small">${m.hp} HP</span></div>`}
+function attack(type){
+let targets=enemies.filter(x=>x.hp>0);if(!targets.length)return;
+if(type===2){targets.forEach(t=>t.hp=Math.max(0,t.hp-(12+Math.floor(Math.random()*8))));log("💥 ทีมของเราโจมตีศัตรูทั้งหมด!")}
+else{let t=targets[Math.floor(Math.random()*targets.length)];let dmg=18+Math.floor(Math.random()*15);t.hp=Math.max(0,t.hp-dmg);log(`${buddy.icon} ${buddy.th} ใช้ ${buddy.skill[type]} ทำ ${dmg} damage`)}
+enemyTurn();render();checkWin();
+}
+function heal(){my.forEach(m=>m.hp=Math.min(100,m.hp+15));log("✨ ทีมฟื้น HP");enemyTurn();render()}
+function enemyTurn(){let alive=my.filter(x=>x.hp>0);enemies.filter(x=>x.hp>0).forEach(e=>{if(!alive.length)return;let t=alive[Math.floor(Math.random()*alive.length)];let d=6+Math.floor(Math.random()*9);t.hp=Math.max(0,t.hp-d)});log("👾 ฝ่ายศัตรูโต้กลับ")}
+function checkWin(){if(enemies.every(x=>x.hp<=0)){exp+=50;log("🏆 ชนะ! ได้รับ 50 EXP");if(exp>=100){level++;exp-=100;log("⭐ LEVEL UP! Lv."+level)}$("buddyName").textContent=buddy.th+" • Lv."+level;setTimeout(backWorld,900)}}
+function backWorld(){$("battle").classList.add("hidden");$("world").classList.remove("hidden")}
+function log(t){$("log").innerHTML+=t+"<br>";$("log").scrollTop=9999}
+let saved=localStorage.getItem("fiveBuddy");if(saved!==null)choose(+saved);
+</script></body></html>
